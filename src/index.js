@@ -44,10 +44,10 @@ const isDomainOrSubdomain = (destination, original) => {
  * @param {string|URL} destination
  */
 const isSameProtocol = (destination, original) => {
-       const orig = new URL(original).protocol;
-       const dest = new URL(destination).protocol;
+	const orig = new URL(original).protocol;
+	const dest = new URL(destination).protocol;
 
-       return orig === dest;
+	return orig === dest;
 };
 
 
@@ -77,7 +77,7 @@ export default function fetch(url, opts) {
 		const { signal } = request;
 		let response = null;
 
-		const abort = ()  => {
+		const abort = () => {
 			let error = new AbortError('The user aborted a request.');
 			reject(error);
 			if (request.body && request.body instanceof Stream.Readable) {
@@ -227,7 +227,7 @@ export default function fetch(url, opts) {
 							body: request.body,
 							signal: request.signal,
 							timeout: request.timeout,
-              size: request.size
+							size: request.size
 						};
 
 						if (!isDomainOrSubdomain(request.url, locationURL) || !isSameProtocol(request.url, locationURL)) {
@@ -262,6 +262,10 @@ export default function fetch(url, opts) {
 				if (signal) signal.removeEventListener('abort', abortAndFinalize);
 			});
 			let body = res.pipe(new PassThrough());
+
+			res.once('error', function (error) {
+				body.emit('error', error)
+			});
 
 			const response_options = {
 				url: request.url,
@@ -359,7 +363,7 @@ function fixResponseChunkedTransferBadEnding(request, errorCallback) {
 	});
 
 	request.on('response', response => {
-		const {headers} = response;
+		const { headers } = response;
 		if (headers['transfer-encoding'] === 'chunked' && !headers['content-length']) {
 			response.once('close', hadError => {
 				// if a data listener is still present we didn't end cleanly
@@ -375,7 +379,7 @@ function fixResponseChunkedTransferBadEnding(request, errorCallback) {
 	});
 }
 
-function destroyStream (stream, err) {
+function destroyStream(stream, err) {
 	if (stream.destroy) {
 		stream.destroy(err);
 	} else {

@@ -65,6 +65,9 @@ function isAbortSignal(signal) {
 	return !!(proto && proto.constructor.name === 'AbortSignal');
 }
 
+/** This is non-exhaustive, derived from https://nodejs.org/docs/latest-v16.x/api/https.html#httpsrequesturl-options-callback */
+const TLS_OPTIONS = ['ca', 'cert', 'key', 'passphrase', 'pfx', 'rejectUnauthorized'];
+
 /**
  * Request class
  *
@@ -146,6 +149,14 @@ export default class Request {
 			input.compress : true;
 		this.counter = init.counter || input.counter || 0;
 		this.agent = init.agent || input.agent;
+
+		for (const field of TLS_OPTIONS) {
+			if (init[field] !== undefined) {
+				this[field]  = init[field];
+			} else if (input[field] !== undefined) {
+				this[field] = input[field];
+			}
+		}
 	}
 
 	get method() {
@@ -265,7 +276,14 @@ export function getNodeRequestOptions(request) {
 	// HTTP-network fetch step 4.2
 	// chunked encoding is handled by Node.js
 
-	return Object.assign({}, parsedURL, {
+	const tlsOptions = {};
+	for (const field of TLS_OPTIONS) {
+		if (request[field] !== undefined) {
+			tlsOptions[field] = request[field];
+		}
+	}
+
+	return Object.assign({}, parsedURL, tlsOptions, {
 		method: request.method,
 		headers: exportNodeCompatibleHeaders(headers),
 		agent
